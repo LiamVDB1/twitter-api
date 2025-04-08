@@ -1,21 +1,24 @@
 FROM node:18-alpine
 
+# Install pnpm
+RUN npm install -g pnpm
+
 WORKDIR /app
 
-# Copy dependency definitions
-COPY package.json package-lock.json* ./
+# Copy package.json and pnpm lock file
+COPY package.json pnpm-lock.yaml* ./
 
 # Install dependencies
-RUN npm ci
+RUN pnpm install --frozen-lockfile
 
 # Copy the source code
 COPY . .
 
 # Build the application
-RUN npm run build
+RUN pnpm build
 
 # Expose the port
-EXPOSE 3000
+EXPOSE 3002
 
 # Define the command to run the app
-CMD ["npm", "start"]
+CMD ["pnpm", "start"]

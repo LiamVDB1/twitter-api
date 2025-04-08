@@ -1,2 +1,7 @@
 node_modules
 .idea
+.pnpm-store/
+pnpm-debug.log
+dist/
+.env
+logs/

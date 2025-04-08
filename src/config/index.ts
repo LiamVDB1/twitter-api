@@ -8,18 +8,12 @@ export const config = {
     port: parseInt(process.env.PORT || '3000', 10),
     nodeEnv: process.env.NODE_ENV || 'development',
 
-    // Twitter credentials
+    // Twitter credentials - these are the only REQUIRED values
     twitterUsername: process.env.TWITTER_USERNAME || '',
     twitterPassword: process.env.TWITTER_PASSWORD || '',
     twitterEmail: process.env.TWITTER_EMAIL || '',
 
-    // Twitter API v2 credentials (for tweet and poll functionality)
-    twitterApiKey: process.env.TWITTER_API_KEY || '',
-    twitterApiSecret: process.env.TWITTER_API_SECRET_KEY || '',
-    twitterAccessToken: process.env.TWITTER_ACCESS_TOKEN || '',
-    twitterAccessSecret: process.env.TWITTER_ACCESS_TOKEN_SECRET || '',
-
-    // Proxy settings (necessary for browsers)
+    // Proxy settings (optional)
     proxyUrl: process.env.PROXY_URL || '',
 
     // API configuration

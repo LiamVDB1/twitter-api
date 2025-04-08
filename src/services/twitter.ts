@@ -33,22 +33,14 @@ class TwitterService {
             const {
                 twitterUsername,
                 twitterPassword,
-                twitterEmail,
-                twitterApiKey,
-                twitterApiSecret,
-                twitterAccessToken,
-                twitterAccessSecret
+                twitterEmail
             } = config;
 
+            // Basic login with just username/password/email - no API keys needed
             await this.scraper?.login(
                 twitterUsername,
                 twitterPassword,
-                twitterEmail,
-                undefined, // twoFactorSecret not implemented yet
-                twitterApiKey,
-                twitterApiSecret,
-                twitterAccessToken,
-                twitterAccessSecret
+                twitterEmail
             );
 
             this.isLoggedIn = await this.scraper?.isLoggedIn() || false;
