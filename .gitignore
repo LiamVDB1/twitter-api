@@ -1,5 +1,5 @@
 node_modules
-.idea
+.idea/
 .pnpm-store/
 pnpm-debug.log
 dist/
