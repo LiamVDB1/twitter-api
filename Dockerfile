@@ -1,4 +1,4 @@
-FROM node:18-alpine
+FROM node:18-slim
 
 # Install pnpm
 RUN npm install -g pnpm
