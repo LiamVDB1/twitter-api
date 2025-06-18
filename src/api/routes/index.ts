@@ -1,22 +1,31 @@
 import { Router } from 'express';
-import authRoutes from './auth';
-import tweetsRoutes from './tweets';
-import profilesRoutes from './profiles';
-import searchRoutes from './search';
-import accountsRoutes from './accounts';
+import accountsRouter from './accounts';
+import authRouter from './auth';
+import profilesRouter from './profiles';
+import searchRouter from './search';
+import tweetsRouter from './tweets';
+import { twitterService } from '../../services/twitter';
+import { requireApiKey } from '../middleware/auth';
+import { logger } from '../../utils/logger';
 
-const router = Router();
+const mainRouter = Router();
 
 // Health check endpoint
-router.get('/health', (req, res) => {
+mainRouter.get('/health', (req, res) => {
     res.status(200).json({ status: 'ok' });
 });
 
-// Mount routes
-router.use('/auth', authRoutes);
-router.use('/tweets', tweetsRoutes);
-router.use('/profiles', profilesRoutes);
-router.use('/search', searchRoutes);
-router.use('/accounts', accountsRoutes);
+// All other routes are protected by API key
+mainRouter.use(requireApiKey);
 
-export default router;
+mainRouter.get('/status', (req, res) => {
+    res.status(200).json(twitterService.getAccountsStatus());
+});
+
+mainRouter.use('/accounts', accountsRouter);
+mainRouter.use('/auth', authRouter);
+mainRouter.use('/profiles', profilesRouter);
+mainRouter.use('/search', searchRouter);
+mainRouter.use('/tweets', tweetsRouter);
+
+export default mainRouter;

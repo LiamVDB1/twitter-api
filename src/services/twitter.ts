@@ -1,23 +1,19 @@
-import { Scraper } from 'agent-twitter-client';
-import { config } from '../config';
+import { Scraper } from '@the-convocation/twitter-scraper';
 import { logger } from '../utils/logger';
 import { accountManager } from './AccountManager';
 import { TwitterAccount } from '../models/TwitterAccount';
-import { RateLimitTracker } from '../utils/RateLimitTracker';
 
 class TwitterService {
     private scrapers: Map<string, Scraper> = new Map();
     private initialized: boolean = false;
 
-    constructor() {
-        this.initAccountManager();
-    }
+    constructor() {}
 
-    private initAccountManager() {
+    async init() {
         if (this.initialized) return;
 
         // Initialize the account manager with configured accounts
-        accountManager.init(config.twitterAccounts);
+        await accountManager.init();
         this.initialized = true;
 
         logger.info(`Twitter service initialized with ${accountManager.getAccountCount()} accounts`);
@@ -73,11 +69,18 @@ class TwitterService {
         }
 
         try {
-            await scraper.login(
-                account.username,
-                account.password,
-                account.email
-            );
+            if (account.email) {
+                await scraper.login(
+                    account.username,
+                    account.password,
+                    account.email
+                );
+            } else {
+                await scraper.login(
+                    account.username,
+                    account.password
+                );
+            }
 
             account.isLoggedIn = await scraper.isLoggedIn() || false;
             logger.info(`Twitter login ${account.isLoggedIn ? 'successful' : 'failed'} for account ${account.username}`);
@@ -156,15 +159,8 @@ class TwitterService {
      * Get the profile for the specified username
      */
     async getProfile(username: string) {
-        return this.executeOperation(async ({ scraper, account }) => {
-            try {
-                const profile = await scraper.getProfile(username);
-                accountManager.updateAccountStatus(account, true);
-                return profile;
-            } catch (error) {
-                accountManager.updateAccountStatus(account, false, error instanceof Error ? error.message : String(error));
-                throw error;
-            }
+        return this.executeOperation(async ({ scraper }) => {
+            return scraper.getProfile(username);
         }, 'profiles');
     }
 
@@ -172,15 +168,8 @@ class TwitterService {
      * Get a tweet by ID
      */
     async getTweet(id: string) {
-        return this.executeOperation(async ({ scraper, account }) => {
-            try {
-                const tweet = await scraper.getTweet(id);
-                accountManager.updateAccountStatus(account, true);
-                return tweet;
-            } catch (error) {
-                accountManager.updateAccountStatus(account, false, error instanceof Error ? error.message : String(error));
-                throw error;
-            }
+        return this.executeOperation(async ({ scraper }) => {
+            return scraper.getTweet(id);
         }, 'tweets');
     }
 
@@ -188,21 +177,15 @@ class TwitterService {
      * Get tweets for the specified username
      */
     async getTweets(username: string, maxTweets: number = 20) {
-        return this.executeOperation(async ({ scraper, account }) => {
-            try {
-                const tweetsGenerator = scraper.getTweets(username, maxTweets);
-                const tweets = [];
+        return this.executeOperation(async ({ scraper }) => {
+            const tweetsGenerator = scraper.getTweets(username, maxTweets);
+            const tweets = [];
 
-                for await (const tweet of tweetsGenerator) {
-                    tweets.push(tweet);
-                }
-
-                accountManager.updateAccountStatus(account, true);
-                return tweets;
-            } catch (error) {
-                accountManager.updateAccountStatus(account, false, error instanceof Error ? error.message : String(error));
-                throw error;
+            for await (const tweet of tweetsGenerator) {
+                tweets.push(tweet);
             }
+
+            return tweets;
         }, 'tweets');
     }
 
@@ -210,15 +193,8 @@ class TwitterService {
      * Get the latest tweet for the specified username
      */
     async getLatestTweet(username: string, includeRetweets: boolean = false) {
-        return this.executeOperation(async ({ scraper, account }) => {
-            try {
-                const tweet = await scraper.getLatestTweet(username, includeRetweets);
-                accountManager.updateAccountStatus(account, true);
-                return tweet;
-            } catch (error) {
-                accountManager.updateAccountStatus(account, false, error instanceof Error ? error.message : String(error));
-                throw error;
-            }
+        return this.executeOperation(async ({ scraper }) => {
+            return scraper.getLatestTweet(username, includeRetweets);
         }, 'tweets');
     }
 
@@ -226,27 +202,20 @@ class TwitterService {
      * Search tweets using the specified query
      */
     async searchTweets(query: string, maxTweets: number = 20) {
-        return this.executeOperation(async ({ scraper, account }) => {
-            try {
-                const tweetsGenerator = scraper.searchTweets(query, maxTweets, 1); // SearchMode.Latest
-                const tweets = [];
+        return this.executeOperation(async ({ scraper }) => {
+            const tweetsGenerator = scraper.searchTweets(query, maxTweets);
+            const tweets = [];
 
-                for await (const tweet of tweetsGenerator) {
-                    tweets.push(tweet);
-                }
-
-                accountManager.updateAccountStatus(account, true);
-                return tweets;
-            } catch (error) {
-                accountManager.updateAccountStatus(account, false, error instanceof Error ? error.message : String(error));
-                throw error;
+            for await (const tweet of tweetsGenerator) {
+                tweets.push(tweet);
             }
+
+            return tweets;
         }, 'search');
     }
 
     /**
-     * Send a tweet
-     */
+     *  These features are not implemented inside of the `the-convocation/twitter-scraper` package.
     async sendTweet(text: string, replyToTweetId?: string) {
         return this.executeOperation(async ({ scraper, account }) => {
             try {
@@ -259,10 +228,7 @@ class TwitterService {
             }
         }, 'tweets');
     }
-
-    /**
-     * Like a tweet
-     */
+    
     async likeTweet(tweetId: string) {
         return this.executeOperation(async ({ scraper, account }) => {
             try {
@@ -276,9 +242,6 @@ class TwitterService {
         }, 'tweets');
     }
 
-    /**
-     * Retweet a tweet
-     */
     async retweet(tweetId: string) {
         return this.executeOperation(async ({ scraper, account }) => {
             try {
@@ -292,9 +255,6 @@ class TwitterService {
         }, 'tweets');
     }
 
-    /**
-     * Follow a user
-     */
     async followUser(username: string) {
         return this.executeOperation(async ({ scraper, account }) => {
             try {
@@ -307,6 +267,7 @@ class TwitterService {
             }
         }, 'profiles');
     }
+    */
 
     /**
      * Execute an operation with a Twitter scraper
@@ -316,54 +277,55 @@ class TwitterService {
         operation: (params: { scraper: Scraper, account: TwitterAccount }) => Promise<T>,
         endpointCategory: string
     ): Promise<T> {
-        try {
-            // Get the best available account
+        let lastError: Error | null = null;
+        const attemptedAccounts = new Set<string>();
+
+        while (attemptedAccounts.size < accountManager.getAccountCount()) {
             const account = accountManager.getBestAvailableAccount(endpointCategory);
-
-            if (!account) {
-                const waitTime = accountManager.getWaitTime(endpointCategory);
-
-                if (waitTime > 0) {
-                    logger.warn(`All accounts are rate limited for ${endpointCategory}. Retry after ${waitTime} seconds.`);
-                    throw new Error(`Rate limited. Retry after ${waitTime} seconds.`);
-                } else {
-                    throw new Error('No available Twitter accounts');
-                }
+            if (!account || attemptedAccounts.has(account.username)) {
+                break;
             }
 
-            // Get scraper for this account
-            const { scraper, account: selectedAccount } = await this.getScraper(account);
+            attemptedAccounts.add(account.username);
+            account.inUse = true;
 
-            // Execute the operation
-            const result = await operation({ scraper, account: selectedAccount });
-
-            return result;
-        } catch (error) {
-            // Check if this is a rate limit error
-            if (error instanceof Error &&
-                (error.message.includes('Rate limit') || error.message.includes('429'))) {
-                logger.warn(`Rate limit detected: ${error.message}`);
-
-                // Handle rate limiting here
-                // We've already updated the account status in the operation wrapper
+            try {
+                const { scraper } = await this.getScraper(account);
+                const result = await operation({ scraper, account });
+                accountManager.updateAccountStatus(account, true, undefined, endpointCategory);
+                account.inUse = false;
+                return result;
+            } catch (error) {
+                lastError = error as Error;
+                logger.warn(`Operation failed for account ${account.username}: ${lastError.message}`);
+                accountManager.updateAccountStatus(account, false, lastError.message, endpointCategory);
+                account.inUse = false;
             }
-
-            throw error;
         }
+
+        throw new Error(`Operation failed for all accounts. Last error: ${lastError?.message || 'Unknown error'}`);
+    }
+
+    /**
+     * DANGER: This should only be used in a test environment.
+     * Resets the singleton's state.
+     */
+    public _resetForTest(): void {
+        this.scrapers.clear();
+        this.initialized = false;
+        accountManager._resetForTest();
     }
 
     /**
      * Get account statistics and status information
      */
     getAccountsStatus() {
-        const accounts = accountManager.getAllAccounts();
-
-        return accounts.map(account => ({
+        return accountManager.getAllAccounts().map(account => ({
             username: account.username,
             isLoggedIn: account.isLoggedIn,
-            disabled: account.disabled,
+            isDisabled: account.disabled,
             health: account.getHealth(),
-            successRate: account.getSuccessRate()
+            rateLimits: account.getRateLimits(),
         }));
     }
 }

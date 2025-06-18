@@ -65,8 +65,11 @@ function parseTwitterAccounts(): TwitterAccountConfig[] {
 }
 
 export const config = {
-    port: parseInt(process.env.PORT || '3000', 10),
+    port: process.env.PORT ? parseInt(process.env.PORT, 10) : 3000,
     nodeEnv: process.env.NODE_ENV || 'development',
+    apiKey: process.env.API_KEY,
+    databasePath: process.env.DATABASE_PATH || 'state.db',
+    accountsFilePath: process.env.ACCOUNTS_FILE_PATH || 'accounts.json',
 
     // Twitter accounts configuration
     twitterAccounts: parseTwitterAccounts(),

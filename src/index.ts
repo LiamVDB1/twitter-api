@@ -1,31 +1,23 @@
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import morgan from 'morgan';
-import routes from './api/routes';
-import { errorHandler } from './api/middleware/error';
+import { app } from './app';
 import { config } from './config';
 import { logger } from './utils/logger';
+import { twitterService } from './services/twitter';
 
-const app = express();
+const startServer = async () => {
+    try {
+        await twitterService.init();
+        app.listen(config.port, () => {
+            logger.info(`Server running on port ${config.port}`);
+        });
+    } catch (error) {
+        logger.error(`Failed to start server: ${error}`);
+        process.exit(1);
+    }
+};
 
-// Middleware
-app.use(helmet());
-app.use(cors());
-app.use(express.json({ limit: '10mb' }));
-app.use(morgan('combined', { stream: { write: (message) => logger.info(message.trim()) } }));
-
-// Routes
-app.use('/api', routes);
-
-// Error handling
-app.use(errorHandler);
-
-// Start server
-const PORT = config.port;
-app.listen(PORT, () => {
-    logger.info(`Server running on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'test') {
+    startServer();
+}
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err: Error) => {
@@ -33,3 +25,5 @@ process.on('unhandledRejection', (err: Error) => {
     // Close server & exit process
     process.exit(1);
 });
+
+export { app, startServer };

@@ -32,6 +32,7 @@ export class TwitterAccount {
     public tags: string[];
     public disabled: boolean;
     public isLoggedIn: boolean;
+    public inUse: boolean;
 
     private health: AccountHealth;
     private rateLimits: Map<string, RateLimitInfo>;
@@ -44,6 +45,7 @@ export class TwitterAccount {
         this.tags = config.tags || [];
         this.disabled = config.disabled || false;
         this.isLoggedIn = false;
+        this.inUse = false;
 
         this.health = {
             successCount: 0,
@@ -133,6 +135,13 @@ export class TwitterAccount {
         const total = this.health.successCount + this.health.failureCount;
         if (total === 0) return 1; // No operations yet, assume good
         return this.health.successCount / total;
+    }
+
+    /**
+     * Get account rate limits
+     */
+    getRateLimits(): Map<string, RateLimitInfo> {
+        return this.rateLimits;
     }
 
     /**

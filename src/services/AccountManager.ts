@@ -1,5 +1,8 @@
 import { TwitterAccount, TwitterAccountConfig } from '../models/TwitterAccount';
 import { logger } from '../utils/logger';
+import { dbService } from './database';
+import fs from 'fs';
+import { config } from '../config';
 
 /**
  * Manages a pool of Twitter accounts, providing rotation and selection strategies
@@ -7,17 +10,58 @@ import { logger } from '../utils/logger';
 export class AccountManager {
     private accounts: TwitterAccount[] = [];
     private lastUsedIndex: number = -1;
+    public inUse: boolean;
 
-    constructor() {}
+    constructor() {
+        this.inUse = false;
+    }
 
     /**
-     * Initialize accounts from configuration
+     * Initialize accounts from the database, seeding from a file if necessary
      */
-    public init(accountConfigs: TwitterAccountConfig[]): void {
-        this.accounts = accountConfigs.map(config => new TwitterAccount(config));
+    public async init(): Promise<void> {
+        dbService.connect();
+        this.seedDatabaseFromFile();
+        
+        this.accounts = dbService.getAccounts();
         this.accounts.sort((a, b) => a.priority - b.priority);
 
-        logger.info(`Account manager initialized with ${this.accounts.length} accounts`);
+        logger.info(`Account manager initialized with ${this.accounts.length} accounts from database`);
+    }
+
+    private seedDatabaseFromFile(): void {
+        try {
+            // Check if DB is empty
+            if (dbService.getAccountCount() > 0) {
+                logger.info('Database is not empty, skipping seed.');
+                return;
+            }
+
+            // Check if seed file exists
+            if (!fs.existsSync(config.accountsFilePath)) {
+                logger.warn(`Accounts file not found at ${config.accountsFilePath}, skipping seed.`);
+                return;
+            }
+
+            logger.info(`Database is empty, seeding from ${config.accountsFilePath}...`);
+            const fileContent = fs.readFileSync(config.accountsFilePath, 'utf-8');
+            const accountConfigs: TwitterAccountConfig[] = JSON.parse(fileContent);
+
+            for (const accConfig of accountConfigs) {
+                dbService.addAccount(accConfig);
+            }
+            
+            logger.info(`Seeded ${accountConfigs.length} accounts into the database.`);
+
+        } catch (error) {
+            logger.error(`Error seeding database from file: ${error}`);
+            // Do not exit process in test environment
+            if (process.env.NODE_ENV !== 'test') {
+                process.exit(1);
+            } else {
+                throw error;
+            }
+        }
     }
 
     /**
@@ -51,9 +95,13 @@ export class AccountManager {
     }
 
     /**
-     * Add a new account to the pool
+     * Add a new account to the pool and database
      */
     public addAccount(config: TwitterAccountConfig): TwitterAccount {
+        // Add to DB first
+        dbService.addAccount(config);
+        
+        // Then add to in-memory pool
         const account = new TwitterAccount(config);
         this.accounts.push(account);
         this.accounts.sort((a, b) => a.priority - b.priority);
@@ -61,9 +109,13 @@ export class AccountManager {
     }
 
     /**
-     * Remove an account from the pool
+     * Remove an account from the pool and database
      */
     public removeAccount(username: string): boolean {
+        // Remove from DB first
+        dbService.deleteAccount(username);
+
+        // Then remove from in-memory pool
         const index = this.accounts.findIndex(account => account.username === username);
         if (index === -1) return false;
 
@@ -86,7 +138,7 @@ export class AccountManager {
             const index = (startIndex + i) % this.accounts.length;
             const account = this.accounts[index];
 
-            if (!account.disabled && account.canUse(endpoint)) {
+            if (!account.disabled && account.canUse(endpoint) && !account.inUse) {
                 this.lastUsedIndex = index;
                 return account;
             }
@@ -106,7 +158,7 @@ export class AccountManager {
 
         // Filter available accounts
         const availableAccounts = this.accounts.filter(
-            account => !account.disabled && account.canUse(endpoint)
+            account => !account.disabled && account.canUse(endpoint) && !account.inUse
         );
 
         if (availableAccounts.length === 0) {
@@ -144,7 +196,7 @@ export class AccountManager {
     }
 
     /**
-     * Update an account's status after an operation
+     * Update an account's status after an operation and persist it
      */
     public updateAccountStatus(
         account: TwitterAccount,
@@ -174,6 +226,18 @@ export class AccountManager {
                 rateLimit.limit
             );
         }
+        
+        // Persist the updated state to the database
+        dbService.updateAccountState(account);
+    }
+
+    /**
+     * DANGER: This should only be used in a test environment.
+     * Resets the singleton's state.
+     */
+    public _resetForTest(): void {
+        this.accounts = [];
+        this.lastUsedIndex = -1;
     }
 }
 

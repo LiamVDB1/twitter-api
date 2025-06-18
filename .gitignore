@@ -5,3 +5,9 @@ pnpm-debug.log
 dist/
 .env
 logs/
+coverage/
+
+# Database
+state.db
+state.db-journal
+db.sqlite
