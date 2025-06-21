@@ -29,6 +29,34 @@ export const getTweet = async (
     }
 };
 
+export const getThread = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    try {
+        const { id } = req.params;
+
+        if (!id) {
+            throw new ApiError(400, 'Tweet ID is required');
+        }
+
+        const thread = await twitterService.getThread(id);
+
+        if (!thread || thread.length === 0) {
+            throw new ApiError(404, 'Thread not found');
+        }
+
+        res.status(200).json({
+            success: true,
+            count: thread.length,
+            data: thread
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 export const getTweets = async (
     req: Request,
     res: Response,
@@ -37,12 +65,13 @@ export const getTweets = async (
     try {
         const { username } = req.params;
         const maxTweets = parseInt(req.query.maxTweets as string || '20', 10);
+        const sinceId = req.query.sinceId as string | undefined;
 
         if (!username) {
             throw new ApiError(400, 'Username is required');
         }
 
-        const tweets = await twitterService.getTweets(username, maxTweets);
+        const tweets = await twitterService.getTweets(username, maxTweets, sinceId);
 
         res.status(200).json({
             success: true,
@@ -76,75 +105,6 @@ export const getLatestTweet = async (
         res.status(200).json({
             success: true,
             data: tweet
-        });
-    } catch (error) {
-        next(error);
-    }
-};
-
-export const sendTweet = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-) => {
-    try {
-        const { text, replyToTweetId } = req.body;
-
-        if (!text) {
-            throw new ApiError(400, 'Tweet text is required');
-        }
-
-        const response = await twitterService.sendTweet(text, replyToTweetId);
-
-        res.status(201).json({
-            success: true,
-            data: response
-        });
-    } catch (error) {
-        next(error);
-    }
-};
-
-export const likeTweet = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-) => {
-    try {
-        const { id } = req.params;
-
-        if (!id) {
-            throw new ApiError(400, 'Tweet ID is required');
-        }
-
-        const result = await twitterService.likeTweet(id);
-
-        res.status(200).json({
-            success: true,
-            data: result
-        });
-    } catch (error) {
-        next(error);
-    }
-};
-
-export const retweet = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-) => {
-    try {
-        const { id } = req.params;
-
-        if (!id) {
-            throw new ApiError(400, 'Tweet ID is required');
-        }
-
-        const result = await twitterService.retweet(id);
-
-        res.status(200).json({
-            success: true,
-            data: result
         });
     } catch (error) {
         next(error);

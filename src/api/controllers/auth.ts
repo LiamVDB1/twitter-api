@@ -46,7 +46,7 @@ export const status = async (
     next: NextFunction
 ) => {
     try {
-        const isLoggedIn = await twitterService.login();
+        const isLoggedIn = await twitterService.isLoggedIn();
 
         res.status(200).json({
             success: true,

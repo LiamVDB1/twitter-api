@@ -28,26 +28,3 @@ export const getProfile = async (
         next(error);
     }
 };
-
-export const followUser = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-) => {
-    try {
-        const { username } = req.params;
-
-        if (!username) {
-            throw new ApiError(400, 'Username is required');
-        }
-
-        const result = await twitterService.followUser(username);
-
-        res.status(200).json({
-            success: true,
-            data: result
-        });
-    } catch (error) {
-        next(error);
-    }
-};
