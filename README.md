@@ -11,6 +11,7 @@ This is a robust, highly available Twitter API wrapper built with Node.js, Expre
 - **Resilient**: If an account is rate-limited, locked, or fails, the system automatically switches to a healthy account.
 - **Extensible**: The service-oriented architecture makes it easy to add new features and endpoints.
 - **Dockerized**: Comes with a `Dockerfile` and `docker-compose.yml` for easy setup and deployment.
+- **Asynchronous Job Processing**: Handles long-running tasks like fetching large numbers of tweets without client timeouts, using a robust polling mechanism.
 - **Persistent State**: Uses a SQLite database to persist account health and rate limit status across restarts.
 - **Dynamic Management**: Add and remove accounts on-the-fly via API endpoints.
 - **Secure**: Protects all endpoints with API key authentication.
@@ -169,15 +170,26 @@ All endpoints are prefixed with `/api` and require an `X-API-Key` header with yo
     -   **Response**: `200 OK` with the user's profile data.
 
 ### Tweets
-@
+
 -   **`GET /tweets/:id`**:
     -   **Description**: Get a single tweet by its ID.
     -   **Response**: `200 OK` with the tweet data.
 
 -   **`GET /tweets/user/:username`**:
-    -   **Description**: Get tweets for a specific user.
-    -   **Query Params**: `maxTweets` (number, optional)
+    -   **Description**: Get tweets for a specific user. For fetching a large number of tweets, it is recommended to use the asynchronous `POST /jobs/tweets/:username` endpoint to avoid timeouts.
+    -   **Query Params**: `maxTweets` (number, optional), `sinceId` (string, optional)
     -   **Response**: `200 OK` with a list of tweets.
+
+### Jobs
+
+-   **`POST /jobs/tweets/:username`**:
+    -   **Description**: Creates a job to fetch tweets for a user. This is the recommended way to handle potentially long-running requests for a large number of tweets.
+    -   **Query Params**: `maxTweets` (number, optional), `sinceId` (string, optional)
+    -   **Response**: `202 Accepted` with a `jobId` that can be used to poll for the result.
+
+-   **`GET /jobs/:id`**:
+    -   **Description**: Get the status and result of a job. Poll this endpoint until the status is `completed` or `failed`.
+    -   **Response**: `200 OK` with the job object. The `status` field can be `pending`, `processing`, `completed`, or `failed`. When completed, the `result` field will contain the tweets.
 
 ### Search
 

@@ -246,29 +246,25 @@ class TwitterService {
      * @param tweetId The ID of any tweet within the conversation.
      * @returns A promise that resolves to an array of Tweet objects representing the thread.
      */
-    async getThread(tweetId: string): Promise<Tweet[]> {
+    async getThread(tweetId: string): Promise<Tweet | null> {
         return this.executeOperation(async ({ scraper }) => {
             // First, get any tweet from the conversation to find the conversationId.
             const initialTweet = await scraper.getTweet(tweetId);
             if (!initialTweet?.conversationId) {
                 // If it's not a real tweet or has no conversation ID, return it alone or nothing.
-                return initialTweet ? [initialTweet] : [];
+                return initialTweet ? initialTweet : null;
             }
 
             // A tweet's conversationId is the same as the ID of the first tweet in the thread.
             // Fetching the head tweet of the thread will return it with the `thread` property populated.
             const headTweet = await scraper.getTweet(initialTweet.conversationId);
             if (!headTweet) {
-                return [];
+                return null;
             }
 
             // The `thread` property contains all subsequent tweets in the thread.
-            const fullThread = [headTweet, ...headTweet.thread];
-            
-            // The `thread` property is not guaranteed to be ordered. Let's sort by timestamp.
-            fullThread.sort((a, b) => (a.timestamp ?? 0) - (b.timestamp ?? 0));
-            
-            return fullThread;
+                        
+            return headTweet;
         }, 'tweets');
     }
 
@@ -421,7 +417,7 @@ class TwitterService {
             async (conversationId) => {
                 try {
                     const thread = await this.getThread(conversationId);
-                    if (thread.length > 0) {
+                    if (thread !== null) {
                         return { conversationId, thread };
                     }
                 } catch (error) {
@@ -431,31 +427,33 @@ class TwitterService {
             }
         );
 
-        const fetchedThreads = new Map<string, Tweet[]>();
+        const fetchedThreads = new Map<string, Tweet>();
         for (const result of fetchedThreadsArray) {
             if (result && result.thread) {
                 fetchedThreads.set(result.conversationId, result.thread);
             }
         }
 
-        const finalTweets: Tweet[] = [];
-        const addedConversationIds = new Set<string>();
+        if (fetchedThreads.size === 0) {
+            return tweets;
+        }
 
-        for (const tweet of tweets) {
+        const fetchedConversationIds = new Set(fetchedThreads.keys());
+
+        const standaloneTweets = tweets.filter(tweet => {
             const conversationId = tweet.isRetweet && tweet.retweetedStatus
                 ? tweet.retweetedStatus.conversationId
                 : tweet.conversationId;
+            return !conversationId || !fetchedConversationIds.has(conversationId);
+        });
 
-            if (conversationId && fetchedThreads.has(conversationId)) {
-                if (!addedConversationIds.has(conversationId)) {
-                    finalTweets.push(...(fetchedThreads.get(conversationId) || []));
-                    addedConversationIds.add(conversationId);
-                }
-            } else {
-                finalTweets.push(tweet);
-            }
-        }
-        
+        const threadHeadTweets = Array.from(fetchedThreads.values());
+
+        const finalTweets = [...standaloneTweets, ...threadHeadTweets];
+
+        // Sort by timestamp, newest first.
+        finalTweets.sort((a, b) => (b.timestamp ?? 0) - (a.timestamp ?? 0));
+
         return finalTweets;
     }
 

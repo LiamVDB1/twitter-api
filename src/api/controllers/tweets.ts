@@ -2,6 +2,49 @@ import { Request, Response, NextFunction } from 'express';
 import { twitterService } from '../../services/twitter';
 import { ApiError } from '../middleware/error';
 
+// This is a new utility function to remove circular references
+const sanitizeTweet = (tweet: any): any => {
+    if (!tweet || typeof tweet !== 'object') {
+        return tweet;
+    }
+
+    const seen = new WeakSet();
+
+    const clean = (obj: any): any => {
+        if (!obj || typeof obj !== 'object') {
+            return obj;
+        }
+
+        if (seen.has(obj)) {
+            // If it's a tweet object that we've seen, return its ID.
+            if (obj.id) {
+                return { id: obj.id };
+            }
+            // For other circular references, return undefined to have JSON.stringify omit it.
+            return undefined;
+        }
+
+        seen.add(obj);
+
+        // For arrays, map over them and clean each item.
+        if (Array.isArray(obj)) {
+            return obj.map(item => clean(item));
+        }
+
+        // For objects, create a new object and clean each value.
+        const newObj: { [key: string]: any } = {};
+        for (const key in obj) {
+            if (Object.prototype.hasOwnProperty.call(obj, key)) {
+                newObj[key] = clean(obj[key]);
+            }
+        }
+
+        return newObj;
+    };
+
+    return clean(tweet);
+};
+
 export const getTweet = async (
     req: Request,
     res: Response,
@@ -22,7 +65,7 @@ export const getTweet = async (
 
         res.status(200).json({
             success: true,
-            data: tweet
+            data: sanitizeTweet(tweet)
         });
     } catch (error) {
         next(error);
@@ -43,14 +86,14 @@ export const getThread = async (
 
         const thread = await twitterService.getThread(id);
 
-        if (!thread || thread.length === 0) {
+        if (thread === null) {
             throw new ApiError(404, 'Thread not found');
         }
 
         res.status(200).json({
             success: true,
-            count: thread.length,
-            data: thread
+            count: thread.thread.length,
+            data: sanitizeTweet(thread)
         });
     } catch (error) {
         next(error);
@@ -76,7 +119,7 @@ export const getTweets = async (
         res.status(200).json({
             success: true,
             count: tweets.length,
-            data: tweets
+            data: tweets.map(sanitizeTweet)            
         });
     } catch (error) {
         next(error);
@@ -104,7 +147,7 @@ export const getLatestTweet = async (
 
         res.status(200).json({
             success: true,
-            data: tweet
+            data: sanitizeTweet(tweet)
         });
     } catch (error) {
         next(error);
