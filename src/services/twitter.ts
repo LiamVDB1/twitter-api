@@ -189,12 +189,18 @@ class TwitterService {
         const rawTweets = await this.executeOperation(async ({ scraper }) => {
             const tweetsGenerator = scraper.getTweets(username, maxTweets);
             const collectedTweets: Tweet[] = [];
+            let counter = 0;
 
             for await (const tweet of tweetsGenerator) {
                 if (sinceId && tweet.id && tweet.id <= sinceId) {
                     break;
-                }
+                }                
                 collectedTweets.push(tweet);
+                if (counter % 100 == 0){
+                    logger.info(`Fetched ${counter} tweets for ${username}`);
+                }
+
+                counter++;
             }
 
             return collectedTweets;

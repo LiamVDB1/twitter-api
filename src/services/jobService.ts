@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import { logger } from '../utils/logger';
 
 export type JobStatus = 'pending' | 'processing' | 'completed' | 'failed';
 
@@ -15,6 +16,18 @@ export interface Job<T> {
 // In-memory store for jobs
 const jobs = new Map<string, Job<any>>();
 
+const logJobs = (message: string) => {
+    // Correctly logs the contents of the Map for debugging.
+    const jobsToLog = Object.fromEntries(
+        Array.from(jobs.values()).map(job => [job.id, {
+            id: job.id,
+            status: job.status,
+            createdAt: job.createdAt,
+        }])
+    );
+    logger.debug(`${message} | Current jobs: ${JSON.stringify(jobsToLog)}`);
+}
+
 const createJob = <T>(payload: any): Job<T> => {
     const newJob: Job<T> = {
         id: uuidv4(),
@@ -24,10 +37,12 @@ const createJob = <T>(payload: any): Job<T> => {
         updatedAt: new Date(),
     };
     jobs.set(newJob.id, newJob);
+    logJobs(`Created job ${newJob.id}`);
     return newJob;
 };
 
 const getJob = <T>(id: string): Job<T> | undefined => {
+    logJobs(`Attempting to get job ${id}`);
     return jobs.get(id);
 };
 
@@ -43,6 +58,7 @@ const updateJobStatus = <T>(id: string, status: JobStatus, result?: T, error?: s
             job.error = error;
         }
         jobs.set(id, job);
+        logJobs(`Updated job ${id} to status ${status}`);
         return job;
     }
     return undefined;

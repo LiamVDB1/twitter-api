@@ -20,7 +20,7 @@ export class DatabaseService {
 
     public connect(): void {
         if (this.db) return;
-        this.db = new Database(config.databasePath, { verbose: logger.debug.bind(logger) });
+        this.db = new Database(config.databasePath);
         this.initSchema();
     }
 
