@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@the-convocation/twitter-scraper':
-        specifier: ^0.17.1
-        version: 0.17.1
+        specifier: github:LiamVDB1/twitter-scraper
+        version: https://codeload.github.com/LiamVDB1/twitter-scraper/tar.gz/006d322c23f31a024b6bf82db9ea9bc3b30babef
       '@types/he':
         specifier: ^1.2.3
         version: 1.2.3
@@ -38,6 +38,9 @@ importers:
       morgan:
         specifier: ^1.10.0
         version: 1.10.0
+      uuid:
+        specifier: ^11.1.0
+        version: 11.1.0
       winston:
         specifier: ^3.11.0
         version: 3.17.0
@@ -63,6 +66,9 @@ importers:
       '@types/supertest':
         specifier: ^2.0.16
         version: 2.0.16
+      '@types/uuid':
+        specifier: ^10.0.0
+        version: 10.0.0
       '@typescript-eslint/eslint-plugin':
         specifier: ^7.0.1
         version: 7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.8.3))(eslint@8.57.1)(typescript@5.8.3)
@@ -420,8 +426,9 @@ packages:
   '@sinonjs/fake-timers@10.3.0':
     resolution: {integrity: sha512-V4BG07kuYSUkTCSBHG8G8TNhM+F19jXFWnQtzj+we8DrkpSBCee9Z3Ms8yiGer/dlmhe35/Xdgyo3/0rQKg7YA==}
 
-  '@the-convocation/twitter-scraper@0.17.1':
-    resolution: {integrity: sha512-KVCX5GJ2FCfCMui/F7lEo/z8j905mCqYDjGh2opI/uV7e3yAJXoP3U8WMU7GyugNyWWnTxb7RcALiGzqjCTYHA==}
+  '@the-convocation/twitter-scraper@https://codeload.github.com/LiamVDB1/twitter-scraper/tar.gz/006d322c23f31a024b6bf82db9ea9bc3b30babef':
+    resolution: {tarball: https://codeload.github.com/LiamVDB1/twitter-scraper/tar.gz/006d322c23f31a024b6bf82db9ea9bc3b30babef}
+    version: 0.17.1
     engines: {node: '>=16'}
 
   '@tsconfig/node10@1.0.11':
@@ -531,6 +538,9 @@ packages:
 
   '@types/triple-beam@1.3.5':
     resolution: {integrity: sha512-6WaYesThRMCl19iryMYP7/x2OVgCtbIVflDGFpWnb9irXI3UjYE4AzmYuiUKY1AJstGijoY+MgUszMgRxIYTYw==}
+
+  '@types/uuid@10.0.0':
+    resolution: {integrity: sha512-7gqG38EyHgyP1S+7+xomFtL+ZNHcKv6DwNaCZmJmo1vgMugyF3TCnXVg4t1uk89mLNwnLtnY3TpOpCOyp1/xHQ==}
 
   '@types/yargs-parser@21.0.3':
     resolution: {integrity: sha512-I4q9QU9MQv4oEOz4tAHJtNz1cwuLxn2F3xcc2iV5WdqLPpUnj30aUuxt1mAxYTG+oe8CZMV/+6rU4S4gRDzqtQ==}
@@ -2323,6 +2333,10 @@ packages:
     resolution: {integrity: sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==}
     engines: {node: '>= 0.4.0'}
 
+  uuid@11.1.0:
+    resolution: {integrity: sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==}
+    hasBin: true
+
   v8-compile-cache-lib@3.0.1:
     resolution: {integrity: sha512-wa7YjyUGfNZngI/vtK0UHAN+lgDCxBPCylVXGp0zu59Fz5aiGtNXaq3DhIov063MorB+VfufLh3JlF2KdTK3xg==}
 
@@ -2580,7 +2594,7 @@ snapshots:
       '@babel/parser': 7.27.0
       '@babel/template': 7.27.0
       '@babel/types': 7.27.0
-      debug: 4.4.0
+      debug: 4.4.1
       globals: 11.12.0
     transitivePeerDependencies:
       - supports-color
@@ -2859,7 +2873,7 @@ snapshots:
     dependencies:
       '@sinonjs/commons': 3.0.1
 
-  '@the-convocation/twitter-scraper@0.17.1':
+  '@the-convocation/twitter-scraper@https://codeload.github.com/LiamVDB1/twitter-scraper/tar.gz/006d322c23f31a024b6bf82db9ea9bc3b30babef':
     dependencies:
       '@sinclair/typebox': 0.32.35
       cross-fetch: 4.1.0
@@ -3004,6 +3018,8 @@ snapshots:
       '@types/superagent': 8.1.9
 
   '@types/triple-beam@1.3.5': {}
+
+  '@types/uuid@10.0.0': {}
 
   '@types/yargs-parser@21.0.3': {}
 
@@ -5034,6 +5050,8 @@ snapshots:
   util-deprecate@1.0.2: {}
 
   utils-merge@1.0.1: {}
+
+  uuid@11.1.0: {}
 
   v8-compile-cache-lib@3.0.1: {}
 
