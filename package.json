@@ -21,7 +21,7 @@
   "keywords": [],
   "author": "",
   "dependencies": {
-    "@the-convocation/twitter-scraper": "^0.17.1",
+    "@the-convocation/twitter-scraper": "github:LiamVDB1/twitter-scraper",
     "@types/he": "^1.2.3",
     "better-sqlite3": "^11.10.0",
     "cors": "^2.8.5",
