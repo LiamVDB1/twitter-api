@@ -340,12 +340,25 @@ class TwitterService {
     }
 
     /**
-     * Post-processes tweets to apply fixes, like fetching full text for truncated retweets.
+     * Post-processes tweets to apply fixes, like fetching full text for truncated retweets and Articles.
      * @param tweets An array of tweets to process.
      * @private
      */
     private async _processTweets(tweets: Tweet[]): Promise<Tweet[]> {
         return this._executeConcurrentTasks(tweets, async (tweet) => {
+            // If the tweet is an article, fetch its full content.
+            if (tweet.isArticle && tweet.id) {
+                try {
+                    logger.debug(`Tweet ${tweet.id} is an article. Fetching full content.`);
+                    const fullTweet = await this.getTweet(tweet.id);
+                    if (fullTweet) {
+                        return fullTweet; // Replace the original tweet with the full version.
+                    }
+                } catch (error) {
+                    logger.warn(`Failed to fetch full article for tweet ${tweet.id}: ${error instanceof Error ? error.message : String(error)}`);
+                }
+            }
+
             if (tweet.isRetweet && tweet.retweetedStatus) {
                 const originalTweet = tweet.retweetedStatus;
                 const text = originalTweet.text || '';
@@ -354,7 +367,7 @@ class TwitterService {
 
                 if (originalTweet.id && textForLengthCheck.length >= TRUNCATION_SUSPICION_THRESHOLD) {
                     try {
-                        logger.info(`Retweet ${tweet.id} might be truncated. Fetching full tweet ${originalTweet.id}. Original length: ${text.length}, Calculated length: ${textForLengthCheck.length}, text: ${textForLengthCheck}`);
+                        logger.debug(`Retweet ${tweet.id} might be truncated. Fetching full tweet ${originalTweet.id}. Original length: ${text.length}, Calculated length: ${textForLengthCheck.length}, text: ${textForLengthCheck}`);
                         const fullOriginalTweet = await this.getTweet(originalTweet.id);
                         if (fullOriginalTweet) {
                             return {
@@ -363,12 +376,12 @@ class TwitterService {
                                 text: fullOriginalTweet.text,
                                 html: fullOriginalTweet.html,
                             };
-                        }                    
+                        }
                     } catch (error) {
                         logger.warn(`Failed to fetch full tweet for retweet ${originalTweet.id}: ${error instanceof Error ? error.message : String(error)}`);
                     }
                 } else {
-                    logger.info(`Retweet ${tweet.id} is not truncated. Original length: ${text.length}, Calculated length: ${textForLengthCheck.length}`);
+                    logger.debug(`Retweet ${tweet.id} is not truncated. Original length: ${text.length}, Calculated length: ${textForLengthCheck.length}`);
                 }
                 
                 // If not truncated, or if fetching the full tweet failed,
@@ -408,7 +421,7 @@ class TwitterService {
             }
 
             if (isPotentialThread && conversationId) {
-                logger.info(`Thread detected for tweet ${tweet.id}. Adding conversationId ${conversationId} to fetch queue.`);
+                logger.debug(`Thread detected for tweet ${tweet.id}. Adding conversationId ${conversationId} to fetch queue.`);
                 threadsToFetch.add(conversationId);
             }
         }

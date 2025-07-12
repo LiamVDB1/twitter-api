@@ -10,7 +10,7 @@ importers:
     dependencies:
       '@the-convocation/twitter-scraper':
         specifier: github:LiamVDB1/twitter-scraper
-        version: https://codeload.github.com/LiamVDB1/twitter-scraper/tar.gz/261fc36a445d029051bcb2c70628ca1922f91228
+        version: https://codeload.github.com/LiamVDB1/twitter-scraper/tar.gz/960dd7a81e1ae1149007c0403840ba2d2b7eb31a
       '@types/he':
         specifier: ^1.2.3
         version: 1.2.3
@@ -426,8 +426,8 @@ packages:
   '@sinonjs/fake-timers@10.3.0':
     resolution: {integrity: sha512-V4BG07kuYSUkTCSBHG8G8TNhM+F19jXFWnQtzj+we8DrkpSBCee9Z3Ms8yiGer/dlmhe35/Xdgyo3/0rQKg7YA==}
 
-  '@the-convocation/twitter-scraper@https://codeload.github.com/LiamVDB1/twitter-scraper/tar.gz/261fc36a445d029051bcb2c70628ca1922f91228':
-    resolution: {tarball: https://codeload.github.com/LiamVDB1/twitter-scraper/tar.gz/261fc36a445d029051bcb2c70628ca1922f91228}
+  '@the-convocation/twitter-scraper@https://codeload.github.com/LiamVDB1/twitter-scraper/tar.gz/960dd7a81e1ae1149007c0403840ba2d2b7eb31a':
+    resolution: {tarball: https://codeload.github.com/LiamVDB1/twitter-scraper/tar.gz/960dd7a81e1ae1149007c0403840ba2d2b7eb31a}
     version: 0.17.1
     engines: {node: '>=16'}
 
@@ -2873,7 +2873,7 @@ snapshots:
     dependencies:
       '@sinonjs/commons': 3.0.1
 
-  '@the-convocation/twitter-scraper@https://codeload.github.com/LiamVDB1/twitter-scraper/tar.gz/261fc36a445d029051bcb2c70628ca1922f91228':
+  '@the-convocation/twitter-scraper@https://codeload.github.com/LiamVDB1/twitter-scraper/tar.gz/960dd7a81e1ae1149007c0403840ba2d2b7eb31a':
     dependencies:
       '@sinclair/typebox': 0.32.35
       cross-fetch: 4.1.0
